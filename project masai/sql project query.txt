@@ -1,0 +1,80 @@
+--1. MONTHLY ANALYSIS OF NO. OF AQUISITIONS AND IPOS.
+
+select a.month,b.no_of_acquisitions,a.no_of_ipos
+from
+( select datename(month,went_public_on) as month,datepart(month,went_public_on) as month_number, count(*) as no_of_ipos
+from ipos
+group by datename(month,went_public_on),datepart(month,went_public_on)
+ ) a
+
+left join
+
+( select datename(month,acquired_on) as month,datepart(month,acquired_on) as month_number, count(*) as no_of_acquisitions
+from Acquisitions
+group by datename(month,acquired_on),datepart(month,acquired_on)
+ ) b
+on a.month=b.month
+order by a.month_number;
+
+
+
+--2 DISTRIBUTION OF ACQUIRES WHO ALREADY DID IPO VS WHO DIDN'T.
+
+select a.acquirer_name,b.type from Acquisitions a
+left join ipos b 
+on a.acquirer_region=b.region
+group by  a.acquirer_name,b.type
+
+
+--3 acquirere and acquiree who belongs from same regions
+
+
+select a.acquiree_region,a.count_of_acquiree_from_each_region,b.counts_gdhd
+from
+(select acquiree_region,count(*) as count_of_acquiree_from_each_region from Acquisitions
+group by acquiree_region) a
+join
+(select acquirer_region,count(*) as counts_gdhd from acquisitions
+group by acquirer_region) b
+on a.acquiree_region=b.acquirer_region
+
+
+
+
+
+--4 NO. OF EVENTS ORGANIZED IN EACH YEARS.
+
+select year(created_at) as years,count(*) AS no_of_events_in_each_year from event_appearances
+group by year(created_at)
+ORDER BY YEARS,no_of_events_in_each_year DESC
+
+
+
+
+---5 YEARLY HOW MUCH DEGREES ARE COMPLETED
+
+SELECT DATEPART(YEAR,COMPLETED_ON) AS YEARS,COUNT(is_completed) AS COUNT_OF_DEGREES FROM degrees
+WHERE  is_completed=1
+GROUP BY DATEPART(YEAR,COMPLETED_ON)
+
+
+--6 NO OF EVENTS ORGANISED BY EACH COUNTRY EACH YEAR
+
+select country_code,year(created_at) as years,COUNT(*) AS COUNT from events
+GROUP BY country_code,year(created_at) 
+ORDER BY COUNT DESC;
+
+
+---7 no. OF INVESTORS AND TOTAL SUM OF INVESTMENT BY COUNTRY WIse
+
+SELECT COUNTRY_CODE ,COUNT(*) AS COUNT,SUM(raised_amount_usd) AS SUM_IN_USD FROM funding_rounds
+GROUP BY country_code
+ORDER BY COUNT DESC , SUM_IN_USD DESC;
+
+---8 --- SUM OF FUNDS RAISED BY EACH YEAR 
+
+WITH CTE1 AS 
+(select NAME, DATEPART(YEAR,announced_on) AS YEAR from funds)
+SELECT B.YEAR,SUM(raised_amount_usd) AS SUM_OF_FUNDS_EACH_YEAR FROM funds AS A JOIN CTE1 AS B
+ON A.NAME=B.NAME
+GROUP BY B.YEAR;
